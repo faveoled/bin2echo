@@ -6,13 +6,12 @@ import os
 import hashlib
 
 def calculate_chunk_size(output_filename, target_width=80):
-    r"""
+    """
     Calculates a chunk size (bytes per line) that attempts to keep
     the total line length around target_width.
     """
-    # Fixed overhead for the echo command wrapper
-    # echo -n -e "" >> "filename"
-    overhead = len("echo -n -e \"\" >> \"\"") + len(output_filename) 
+
+    overhead = len("echo -ne \"\" >> \"\"") + len(output_filename) 
     
     available_space = target_width - overhead
     
@@ -33,13 +32,13 @@ def main():
     )
     
     parser.add_argument(
-        "output_file", 
-        nargs="?", 
+        "-o", "--output-file",
+        dest="output_file",
         help="The filename that the generated script will write to (default: same as input)."
     )
     
     parser.add_argument(
-        "--chunk-size", 
+        "-c", "--chunk-size", 
         type=int, 
         help="Number of bytes per echo command. (default: auto-calculated for ~80 char lines)"
     )
@@ -89,7 +88,7 @@ def main():
                 hex_str = "".join(f"\\x{b:02x}" for b in chunk)
                 
                 # Print the command
-                print(f'echo -n -e "{hex_str}" >> "{target_filename}"')
+                print(f'echo -ne "{hex_str}" >> "{target_filename}"')
 
     except IOError as e:
         sys.stderr.write(f"Error reading file: {e}\n")
@@ -100,7 +99,7 @@ def main():
         original_checksum = sha256.hexdigest()
         print(f'\nactual=$(sha256sum "{target_filename}")')
         print('actual=${actual%% *}')
-        print(f'if [ "$actual" = "{original_checksum}" ]; then echo "verification succeeded"; else echo "verification failed"; fi')
+        print(f'if [ "$actual" = "{original_checksum}" ]; then echo "file verification succeeded"; else echo "file verification failed"; fi')
 
 if __name__ == "__main__":
     main()
